@@ -1,0 +1,8 @@
+**/node_modules
+**/.next
+**/.env
+**/.env.local
+.git
+**/__pycache__
+edge/outbox
+*.zip

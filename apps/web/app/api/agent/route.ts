@@ -1,0 +1,4 @@
+import { authorized, sameOrigin } from '@/lib/auth';
+import { snapshot } from '@/lib/store';
+import { metrics, alerts } from '@/lib/domain';
+export async function POST(req:Request){if(!await authorized()||!sameOrigin(req))return Response.json({error:'Não autorizado'},{status:401});const s=await snapshot(),m=metrics(s.tables),a=alerts(s.tables,Date.now(),s.threshold);return Response.json({engine:'rules',answer:`${s.mode==='demo'?'Análise de dados simulados. ':''}O salão está com ${m.occupancy}% de ocupação, ${m.people} pessoas e ${m.free} mesas livres. ${a.length?`Priorize ${a.map(x=>x.title.split(' precisa')[0]).join(' e ')}: ultrapassaram o limite de espera.`:'Nenhuma mesa ultrapassou o limite de espera.'} ${m.occupancy>80?'Avalie redistribuir a equipe antes de receber novos grupos.':'Há capacidade para receber novos clientes.'} Previsões de receita e comparação histórica exigem dados adicionais.`});}

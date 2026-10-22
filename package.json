@@ -1,0 +1,1 @@
+{"name":"restaurant-vision-ai","private":true,"packageManager":"pnpm@11.25.0","workspaces":["apps/web"],"scripts":{"dev":"pnpm --filter @vision/web dev","build":"pnpm --filter @vision/web build","start":"pnpm --filter @vision/web start","check":"pnpm --filter @vision/web check","test":"pnpm --filter @vision/web test","db:push":"pnpm --filter @vision/web db:push"}}

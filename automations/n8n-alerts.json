@@ -1,0 +1,11 @@
+{
+ "name":"Restaurant Vision — Alertas operacionais",
+ "active":false,
+ "nodes":[
+  {"id":"hook","name":"Vision Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[260,300],"parameters":{"httpMethod":"POST","path":"restaurant-vision-alerts","authentication":"headerAuth","responseMode":"onReceived","options":{}}},
+  {"id":"format","name":"Preparar alerta","type":"n8n-nodes-base.set","typeVersion":3.4,"position":[500,300],"parameters":{"assignments":{"assignments":[{"id":"id","name":"event_id","type":"string","value":"={{ $json.body.id }}"},{"id":"message","name":"message","type":"string","value":"={{ $json.body.title + ' — ' + Math.floor($json.body.seconds / 60) + ' min de espera. ' + $json.body.zone }}"}]},"options":{}}}
+ ],
+ "connections":{"Vision Webhook":{"main":[[{"node":"Preparar alerta","type":"main","index":0}]]}},
+ "settings":{"executionOrder":"v1"},
+ "meta":{"templateCredsSetupCompleted":false}
+}

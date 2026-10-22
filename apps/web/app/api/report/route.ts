@@ -1,0 +1,3 @@
+import { authorized } from '@/lib/auth';
+import { snapshot } from '@/lib/store';
+export async function GET(){if(!await authorized())return new Response('Não autorizado',{status:401});const s=await snapshot();const rows=['modo,mesa,zona,estado,pessoas,ocupada_desde',...s.tables.map(t=>[s.mode,t.name,t.zone,t.state,t.people,t.occupiedAt?new Date(t.occupiedAt).toISOString():''].map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))];return new Response('\uFEFF'+rows.join('\n'),{headers:{'Content-Type':'text/csv;charset=utf-8','Content-Disposition':'attachment; filename="restaurant-vision.csv"'}});}

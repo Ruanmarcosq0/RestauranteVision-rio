@@ -1,0 +1,5 @@
+import { authorized, demo, sameOrigin } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { restaurantId } from '@/lib/store';
+import { z } from 'zod';
+export async function POST(req:Request){if(!await authorized()||!sameOrigin(req))return Response.json({error:'Não autorizado'},{status:401});if(demo())return Response.json({error:'Demo local'},{status:409});const p=z.object({name:z.string().min(2).max(80),sourceType:z.enum(['MP4','RTSP','ONVIF']),zones:z.array(z.object({tableId:z.string(),polygon:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).min(3).max(20)})).max(50)}).safeParse(await req.json().catch(()=>null));if(!p.success)return Response.json({error:'Câmera inválida'},{status:400});const ids=await db.diningTable.count({where:{restaurantId:restaurantId(),id:{in:p.data.zones.map(z=>z.tableId)}}});if(ids!==new Set(p.data.zones.map(z=>z.tableId)).size)return Response.json({error:'Mesa inválida'},{status:400});const camera=await db.camera.create({data:{...p.data,restaurantId:restaurantId()}});return Response.json(camera);}
