@@ -8,7 +8,7 @@ MVP de inteligência operacional para restaurantes e sorveterias. Dashboard Next
 2. Selecione uma mesa: confirme atendimento, registre saída e conclua limpeza.
 3. Em **Alertas**, use **Simular espera de 5 min** e confirme o atendimento. O alerta desaparece.
 4. Use **Simular movimento** para gerar eventos a cada 6,5 segundos; pause antes de explicar os números.
-5. Em **Câmeras**, cadastre uma câmera, desenhe um polígono e exporte suas zonas.
+5. Em **Câmeras**, teste a câmera do computador/celular ou abra um MP4 local. Você pode salvar um frame para calibrar zonas. Essa prévia não envia imagens e não executa detecção. Cadastre a câmera, desenhe um polígono e exporte suas zonas para o Edge.
 6. Veja **Analytics**, exporte o CSV em **Relatórios** e consulte o **Agente IA**.
 
 O agente deste MVP é um **motor analítico por regras**, identificado na tela. Não há LLM conectado nem previsão de receita. As prévias das câmeras são ilustrações, não filmagens reais. A demo não envia notificações externas e suas mudanças ficam no armazenamento da sessão do navegador, preservadas entre páginas. Use Reiniciar demo para voltar ao cenário inicial.
