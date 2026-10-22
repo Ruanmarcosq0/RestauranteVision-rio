@@ -1,118 +1,89 @@
 # Restaurant Vision AI
 
-MVP de inteligência operacional para restaurantes e sorveterias. Dashboard Next.js/TypeScript, API autenticada, PostgreSQL/Prisma e módulo Edge Python com OpenCV/Ultralytics e ByteTrack ou BoT-SORT.
+Aplicativo de operação para restaurantes e sorveterias, com identidade preta e vermelha. O ambiente publicado usa **produção**, sem métricas simuladas. Registra chegada, primeiro atendimento e saída por mesa; calcula permanência e identifica dia/horário de pico com visitas reais.
 
-## Apresentação em 3 minutos
+- Aplicativo: https://restaurante-vision-rio.vercel.app
+- Guia de conexão: https://restaurante-vision-rio.vercel.app/instalacao
+- Código: https://github.com/Ruanmarcosq0/RestauranteVision-rio
 
-1. Abra `/dashboard`. A faixa **DEMO — DADOS SIMULADOS** identifica todo o cenário.
-2. Selecione uma mesa: confirme atendimento, registre saída e conclua limpeza.
-3. Em **Alertas**, use **Simular espera de 5 min** e confirme o atendimento. O alerta desaparece.
-4. Use **Simular movimento** para gerar eventos a cada 6,5 segundos; pause antes de explicar os números.
-5. Em **Câmeras**, teste a câmera do computador/celular ou abra um MP4 local. Você pode salvar um frame para calibrar zonas. Essa prévia não envia imagens e não executa detecção. Cadastre a câmera, desenhe um polígono e exporte suas zonas para o Edge.
-6. Veja **Analytics**, exporte o CSV em **Relatórios** e consulte o **Agente IA**.
+## Primeiro acesso do responsável
 
-O agente deste MVP é um **motor analítico por regras**, identificado na tela. Não há LLM conectado nem previsão de receita. As prévias das câmeras são ilustrações, não filmagens reais. A demo não envia notificações externas e suas mudanças ficam no armazenamento da sessão do navegador, preservadas entre páginas. Use Reiniciar demo para voltar ao cenário inicial.
+O convite privado de ativação é entregue fora deste repositório. Abra-o, verifique a conexão do banco e informe nome do estabelecimento, seu e-mail, senha de no mínimo 12 caracteres e quantidade de mesas. A ativação cria somente mesas livres, sem visitas fictícias. Depois disso, use `/login`. O convite não permite cadastrar outro responsável após a ativação.
 
-## Rodar a demo
+O banco foi provisionado no **Neon Free**, vinculado à produção Vercel. Segredos estão no ambiente de produção, não no código. Preview não tem acesso ao banco real. O login usa bcrypt, sessão HttpOnly de 8 horas e bloqueio de 15 minutos após cinco tentativas inválidas. Esta versão tem um responsável por unidade; não possui recuperação de senha, cobrança ou equipes multiusuário.
 
-Requisitos: Node 22+, pnpm 11.25.0, Python 3.11+ (Edge). Docker é opcional.
+## Operação manual e com câmeras
 
-```sh
-corepack enable
-corepack prepare pnpm@11.25.0 --activate
-pnpm install --frozen-lockfile
-pnpm --filter @vision/web dev
-```
+Antes da câmera, já é possível registrar visitas reais manualmente em **Mesas**: selecione a mesa, informe pessoas do grupo, registre chegada, atendimento, saída e limpeza. Eventos manuais são identificados. O horário de saída encerra a permanência; a limpeza libera a próxima visita.
 
-Abra `http://127.0.0.1:3000`. Sem `APP_MODE=production`, o sistema usa a demo pública e não depende de banco. Para testar a compilação:
+Para automatizar:
 
-```sh
-pnpm --filter @vision/web test
-pnpm --filter @vision/web build
-pnpm --filter @vision/web start
-cd edge
-python -m unittest discover -s tests -v
-python -m vision.simulator
-```
-
-## Estrutura
-
-```text
-apps/web/app          páginas e API Next.js
-apps/web/components   interface responsiva
-apps/web/lib          estados, autenticação, banco, validação e outbox
-apps/web/prisma       schema PostgreSQL
-apps/web/scripts      provisionamento sem métricas simuladas
-edge/vision           captura, tracking, zonas, estados e transporte
-edge/tests            testes do domínio independente de vídeo
-automations           workflow n8n importável
-docs                  arquitetura, implantação, contratos e validação
-```
-
-## Produção com dados reais
-
-Este MVP isola **uma unidade por implantação**. Não oferece cadastro público ou cobrança SaaS. O mesmo banco pode armazenar várias unidades, mas a sessão só acessa a unidade definida por `RESTAURANT_ID`; deploys separados são necessários no modelo atual.
-
-1. Crie PostgreSQL no Neon/Supabase ou rode `docker compose up -d db`.
-2. Copie `apps/web/.env.example` para `apps/web/.env`. Configure `DATABASE_URL` com SSL no serviço remoto e credenciais próprias; nunca versione esse arquivo.
-3. Defina `RESTAURANT_ID`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` bcrypt, `SESSION_SECRET` aleatório com pelo menos 32 caracteres, `EDGE_API_KEY` e `CRON_SECRET` aleatórios e diferentes.
-4. Execute `pnpm --filter @vision/web db:push`, depois `pnpm --filter @vision/web exec tsx scripts/provision.ts`. São criadas 12 mesas **livres**, nenhum histórico ou ocupação fictícia. Ajuste as mesas/áreas com Prisma Studio (`pnpm --filter @vision/web exec prisma studio`) antes do uso real.
-5. Configure `APP_MODE=production`. Sem banco/credenciais, o aplicativo falha com erro explícito; não substitui dados reais por métricas simuladas.
-6. As zonas do Edge precisam usar os IDs reais (`<RESTAURANT_ID>-table-1` etc.). A exportação do cadastro de câmera usa esses IDs automaticamente.
-7. Configure limitação de tentativas de login na camada de hospedagem/WAF antes de disponibilizar o login para clientes. A autenticação atual é intencionalmente simples: administrador único, bcrypt e cookie HttpOnly de 8h, sem recuperação de senha/MFA.
-
-Para gerar um hash sem pôr senha em argumentos, execute no diretório `apps/web`:
-
-```sh
-node scripts/hash-password.mjs
-```
-
-O prompt lê a senha localmente sem ecoá-la. Configure o hash diretamente no ambiente de hospedagem. Não envie segredos pelo chat.
-
-## Edge AI
+1. Câmera/DVR precisa permitir RTSP ou ONVIF e mostrar as mesas. Um computador permanece ligado na mesma rede.
+2. Cadastre a câmera em **Câmeras**, selecione uma imagem real do enquadramento e desenhe uma zona para cada mesa. A imagem fica no navegador; somente coordenadas são salvas.
+3. Baixe a configuração Edge da câmera. O arquivo contém chave privada da unidade; guarde somente no equipamento local.
+4. Instale Python 3.11+ e as dependências no computador do estabelecimento:
 
 ```sh
 cd edge
 python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
 # Windows: .venv\Scripts\Activate.ps1
+# Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-python -m vision.run --kind mp4 --source /caminho/demo.mp4 --zones zones.example.json
-```
-
-Forneça um MP4 autorizado. Pesos `yolo11n.pt` são baixados pelo Ultralytics no primeiro uso. MP4 sempre funciona como demonstração/dry-run e imprime eventos `source=demo`; não contamina a produção. O simulador sem câmera e sem dependências externas está em `python -m vision.simulator`; o dashboard possui seu próprio simulador interativo.
-
-Para câmera real, configure localmente `RTSP_URL`, `PLATFORM_URL=https://seu-dominio` e `EDGE_API_KEY`, depois:
-
-```sh
+python -m vision.configure
 python -m vision.run --kind rtsp --zones zones.json --live
-# ONVIF: configure ONVIF_HOST, ONVIF_PORT, ONVIF_USER, ONVIF_PASSWORD
-python -m vision.run --kind onvif --zones zones.json --live
 ```
 
-O detector genérico identifica **pessoas**, não distingue garçons. Primeiro atendimento exige confirmação manual no painel ou modelo próprio: `--model seu-modelo.pt --customer-class 0 --staff-class 1`. A presença do funcionário por 4 segundos é apenas evidência operacional; calibre no estabelecimento. Limpeza é confirmada manualmente. Não existe reconhecimento facial.
+O configurador pede o pacote Edge e a URL RTSP em entrada oculta. Credenciais são salvas somente em `.edge-config.json`, ignorado pelo Git. Para ONVIF, configure as variáveis locais `ONVIF_HOST`, `ONVIF_PORT`, `ONVIF_USER`, `ONVIF_PASSWORD`; veja a implementação em `vision/sources.py`. O adaptador ONVIF resolve o stream; alguns dispositivos requerem uma URL RTSP autenticada localmente.
 
-O Edge usa centróide do bounding box e polígonos normalizados. Aguarda 3 s para confirmar ocupação, tolera 15 s de ausência e gera alerta local após 300 s. Credenciais e frames não são enviados à nuvem. A outbox SQLite retém eventos durante falhas e o servidor deduplica UUIDs. Estado de mesas é persistido localmente. Alterações manuais no painel são reconciliadas a cada 5 segundos depois que a fila local estiver vazia; veja [arquitetura](docs/architecture.md).
+O Edge usa OpenCV, YOLO/Ultralytics e ByteTrack (ou BoT-SORT). Confirma ocupação após 3 s, tolera 15 s de ausência e confirma presença de funcionário após 4 s **somente com modelo próprio que distinga funcionários**. O modelo genérico detecta pessoas e não reconhece garçons. Nesse caso, confirme atendimento manualmente. Limpeza permanece manual. Não há reconhecimento facial.
 
-`--show` exige OpenCV com GUI. O pacote padrão é headless; para preview local use uma instalação separada com `opencv-python` em vez de `opencv-python-headless`.
+Use `--tracker botsort.yaml` para trocar o tracker; `--model modelo.pt --customer-class 0 --staff-class 1` exige um modelo treinado e calibrado. O processamento é local e envia metadados, nunca frames. Há fila SQLite com retry/idempotência, persistência local de estados, reconciliação com o painel e heartbeat da câmera. O sinal recente é mostrado quando recebido nos últimos 30 s.
 
-## Docker e n8n
+Um MP4 autorizado pode ser testado com `python -m vision.run --kind mp4 --source video.mp4 --zones zones.json`. Esse teste é dry-run, marcado como simulado e não alimenta a produção. A prévia de câmera/MP4 no navegador não executa YOLO.
+
+## Permanência, pico e relatórios
+
+**Analytics** usa visitas reais dos últimos 7 dias, no fuso de São Paulo. Mostra entrada, atendimento, saída, permanência, média das visitas encerradas, dia de maior movimento e faixa horária com mais pessoas nas novas ocupações. O pico orienta preparar a equipe 30 min antes da faixa observada; não é previsão garantida nem contagem da porta. Sem dados reais, médias e pico ficam vazios.
+
+A consulta tem limite de 50.000 visitas do período; histórico visível e CSV incluem as últimas 50. O agente é analítico por regras, identificado na interface: resume ocupação, espera, permanência e pico observado. Não há LLM conectado nem faturamento estimado.
+
+## Arquitetura
+
+```text
+RTSP/ONVIF → OpenCV + YOLO + tracking → zonas e estados → outbox SQLite
+  → API Next.js autenticada → PostgreSQL/Prisma → dashboard e histórico
+  → outbox de alertas → webhook n8n opcional
+```
+
+`apps/web` contém dashboard/API; `edge` contém visão local; `automations` contém workflow n8n; `docs` descreve contratos e implantação. Uma unidade por implantação, com identificação no servidor. Eventos/transições válidos atualizam mesa e visita na mesma transação com lock de linha.
+
+## Desenvolvimento e implantação
+
+Node 22+, pnpm 11.25.0. Instale com `pnpm install --frozen-lockfile`. Copie os exemplos de ambiente sem versionar segredos. Para uma unidade local vazia, configure PostgreSQL, `RESTAURANT_ID`, `SESSION_SECRET` de 32+ caracteres e `SETUP_TOKEN` aleatório. A rota de ativação inicializa o schema versionado somente com convite válido e recusa sobrescrever schema anterior desconhecido. Depois, o responsável cria o próprio acesso.
 
 ```sh
-docker compose up --build web db
-docker compose --profile automation up -d n8n
+pnpm --filter @vision/web dev
+pnpm --filter @vision/web check
+pnpm --filter @vision/web test
+pnpm --filter @vision/web build
+cd edge
+python -m unittest discover -s tests -v
 ```
 
-Modo padrão é demo. Em produção, provisione o schema e as mesas antes de iniciar o uso real. O n8n local fica em `http://localhost:5678`; configure a conta pelo próprio n8n. Importe `automations/n8n-alerts.json`, configure uma credencial Header Auth com nome `x-vision-secret` e valor igual a `N8N_WEBHOOK_SECRET`, copie a URL de produção para `N8N_WEBHOOK_URL` e ative o workflow. O template **prepara** a mensagem; conecte seu canal de e-mail/WhatsApp/Telegram para envio efetivo. Nenhum canal é contratado ou disparado automaticamente.
+`APP_MODE=production` é o padrão. Uma simulação explícita ainda pode ser habilitada para desenvolvimento com `APP_MODE=demo`; não faz parte do ambiente de produção publicado. `ADMIN_EMAIL`/`ADMIN_PASSWORD_HASH` são campos legados dos exemplos anteriores: o acesso atual fica no modelo `Owner` do banco.
 
-Agende no n8n uma chamada GET a `/api/cron` a cada minuto com `Authorization: Bearer <CRON_SECRET>`. Esse endpoint calcula alertas e drena a outbox (20 por chamada, até 10 tentativas). O cron não é configurado automaticamente na Vercel: planos possuem limites diferentes. Deduplicação é por visita; o receptor deve usar `body.id` como chave idempotente, pois entrega pode se repetir. Para relatórios diários, agende GET `/api/report` usando uma sessão válida ou implemente um consumidor com credencial própria antes de automatizar; não exponha o CSV publicamente.
+Docker: configure os segredos na cópia local de `.env`, depois `docker compose up --build web db`. n8n é opcional via `docker compose --profile automation up -d n8n`.
 
-## Publicação e limitações
+Vercel: projeto `restaurante-vision-rio`, Root Directory `apps/web`, branch `main`, Next.js. Push para `main` publica automaticamente. Somente Production recebe banco e chaves. Python não roda como processo de câmera na Vercel.
 
-Veja [deploy](docs/deploy.md), [arquitetura](docs/architecture.md), [contrato de eventos](docs/events.md) e [validação](docs/validation.md).
+## Alertas externos opcionais
 
-O módulo de visão é uma implementação inicial para calibração; inferência real em MP4/RTSP, ONVIF, Docker e envio por um canal n8n precisam ser validados no hardware e nas contas do cliente. Não há promessa de precisão, previsão de liberação ou faturamento. Contagem é por mesa/câmera, sem deduplicação entre câmeras. Fluxo por horário representa pessoas em novas ocupações, não um contador físico de porta. O painel mostra até 1.000 eventos recentes. Hardware Edge, banco gerenciado e provedores de mensagens são serviços separados.
+Importe `automations/n8n-alerts.json`, configure Header Auth `x-vision-secret`, URL do webhook e canal de entrega. Agende `/api/cron` com bearer `CRON_SECRET` para calcular alertas/drain da outbox. O template prepara a mensagem; envio por WhatsApp/e-mail requer canal próprio. Nenhum canal está ativo automaticamente. O receptor deve deduplicar por ID.
 
-Referências: [Ultralytics tracking](https://docs.ultralytics.com/modes/track/), [Next.js](https://nextjs.org/docs/app), [Prisma 6](https://www.prisma.io/docs/orm/v6).
+## Limites de validação
 
-Licenciamento: o código deste projeto não recebe licença comercial implícita. O Ultralytics possui condições próprias (AGPL/Enterprise); avalie a licença adequada antes de distribuir um produto fechado.
+Testes de domínio cobrem estados, limite de espera, oclusão, polígono, fuso e cálculo de pico/permanência. A instalação física, inferência em filmagem real e precisão dependem da câmera e hardware que o responsável ainda não escolheu. Não houve validação de imagens reais no estabelecimento.
+
+Consulte [operação real](docs/operacao-real.md), [arquitetura](docs/architecture.md), [eventos](docs/events.md) e [deploy](docs/deploy.md). Documentos de entrega anteriores descrevem a primeira versão demo e são históricos; este README e `operacao-real.md` descrevem a versão atual.
+
+O Ultralytics possui licença AGPL/Enterprise própria; avalie a licença adequada antes de distribuir um produto fechado. Hardware e serviços externos não estão incluídos neste código.

@@ -9,10 +9,26 @@ model Restaurant {
  id String @id @default(cuid())
  name String
  threshold Int @default(300)
+ timezone String @default("America/Sao_Paulo")
  tables DiningTable[]
  cameras Camera[]
  events VisionEvent[]
  outbox Outbox[]
+ visits Visit[]
+}
+model Visit {
+ id String @id
+ restaurantId String
+ restaurant Restaurant @relation(fields:[restaurantId],references:[id])
+ tableId String
+ tableName String
+ zone String
+ people Int
+ startedAt DateTime
+ servedAt DateTime?
+ endedAt DateTime?
+ @@index([restaurantId,startedAt])
+ @@index([restaurantId,tableId,endedAt])
 }
 model DiningTable {
  id String @id
@@ -27,6 +43,14 @@ model DiningTable {
  servedAt DateTime?
  updatedAt DateTime @default(now())
  @@index([restaurantId])
+}
+model Owner {
+ restaurantId String @id
+ email String
+ passwordHash String
+ failedAttempts Int @default(0)
+ lockedUntil DateTime?
+ createdAt DateTime @default(now())
 }
 model Camera {
  id String @id @default(cuid())

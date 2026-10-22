@@ -5,4 +5,6 @@
 .git
 **/__pycache__
 edge/outbox
+edge/.edge-config.json
+edge/edge-*.json
 *.zip

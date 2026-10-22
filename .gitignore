@@ -11,3 +11,6 @@ __pycache__/
 generated/
 *.tsbuildinfo
 edge/outbox/
+edge/.edge-config.json
+edge/zones.json
+edge/edge-*.json

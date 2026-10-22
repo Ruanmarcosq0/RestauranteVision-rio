@@ -1,2 +1,2 @@
 import { z } from 'zod';
-export const eventSchema=z.object({id:z.string().min(8).max(160),tableId:z.string().min(1).max(80),type:z.enum(['occupied','served','vacated','cleaned','heartbeat']),people:z.number().int().min(0).max(30),occurredAt:z.number().int().positive(),source:z.enum(['edge','manual'])}).strict();
+export const eventSchema=z.object({id:z.string().min(8).max(160),tableId:z.string().min(1).max(80),type:z.enum(['occupied','served','vacated','cleaned','heartbeat']),people:z.number().int().min(0).max(30),occurredAt:z.number().int().positive(),source:z.enum(['edge','manual'])}).strict().refine(e=>e.type!=='occupied'||e.people>0,{message:'Uma ocupação precisa de ao menos uma pessoa',path:['people']});

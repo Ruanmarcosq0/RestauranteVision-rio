@@ -8,6 +8,11 @@ from .transport import Outbox
 from .sources import resolve_source
 
 def main():
+    local_config = Path('.edge-config.json')
+    if local_config.exists():
+        for key, value in json.loads(local_config.read_text(encoding='utf-8-sig')).items():
+            if key in ('PLATFORM_URL', 'EDGE_API_KEY', 'RTSP_URL'):
+                os.environ.setdefault(key, str(value))
     parser = argparse.ArgumentParser(description='Restaurant Vision Edge: local video -> operational events')
     parser.add_argument('--kind', choices=['mp4', 'rtsp', 'onvif'], default='mp4')
     parser.add_argument('--source', default=os.getenv('RTSP_URL', 'demo.mp4'))
@@ -98,6 +103,13 @@ def main():
             if time.time() - last_dispatch > 5:
                 queue.flush(os.environ['PLATFORM_URL'], os.environ['EDGE_API_KEY'])
                 queue.synchronize(os.environ['PLATFORM_URL'], os.environ['EDGE_API_KEY'], states)
+                try:
+                    import requests
+                    requests.post(os.environ['PLATFORM_URL'].rstrip('/') + '/api/edge/heartbeat',
+                                  json={'cameraId': config.get('cameraId', '')},
+                                  headers={'Authorization': 'Bearer ' + os.environ['EDGE_API_KEY']}, timeout=5)
+                except requests.RequestException:
+                    pass
                 last_dispatch = time.time()
         if args.show:
             cv2.imshow('Restaurant Vision - LOCAL ONLY', results[0].plot())

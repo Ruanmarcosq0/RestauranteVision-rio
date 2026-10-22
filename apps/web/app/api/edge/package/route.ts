@@ -1,0 +1,4 @@
+import {authorized,demo} from '@/lib/auth';
+import {db} from '@/lib/db';
+import {restaurantId} from '@/lib/store';
+export async function GET(req:Request){if(demo()||!await authorized())return Response.json({error:'Faça login'},{status:401});const cameraId=new URL(req.url).searchParams.get('cameraId');if(!cameraId)return Response.json({error:'Selecione uma câmera'},{status:400});const camera=await db.camera.findFirst({where:{id:cameraId,restaurantId:restaurantId()}});if(!camera)return Response.json({error:'Câmera não encontrada'},{status:404});if(!process.env.EDGE_API_KEY)return Response.json({error:'Chave Edge não configurada'},{status:503});return Response.json({platformUrl:new URL(req.url).origin,edgeApiKey:process.env.EDGE_API_KEY,cameraId:camera.id,zones:camera.zones,sourceType:camera.sourceType},{headers:{'Cache-Control':'no-store','Content-Disposition':`attachment; filename="edge-${camera.id}.json"`}});}
