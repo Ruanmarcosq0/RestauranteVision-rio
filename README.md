@@ -11,7 +11,7 @@ MVP de inteligência operacional para restaurantes e sorveterias. Dashboard Next
 5. Em **Câmeras**, cadastre uma câmera, desenhe um polígono e exporte suas zonas.
 6. Veja **Analytics**, exporte o CSV em **Relatórios** e consulte o **Agente IA**.
 
-O agente deste MVP é um **motor analítico por regras**, identificado na tela. Não há LLM conectado nem previsão de receita. As prévias das câmeras são ilustrações, não filmagens reais. A demo não envia notificações externas e suas mudanças são temporárias.
+O agente deste MVP é um **motor analítico por regras**, identificado na tela. Não há LLM conectado nem previsão de receita. As prévias das câmeras são ilustrações, não filmagens reais. A demo não envia notificações externas e suas mudanças ficam no armazenamento da sessão do navegador, preservadas entre páginas. Use Reiniciar demo para voltar ao cenário inicial.
 
 ## Rodar a demo
 
